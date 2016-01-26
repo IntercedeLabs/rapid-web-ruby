@@ -5,7 +5,7 @@ class RapidTest < Minitest::Test
     refute_nil ::Rapid::VERSION
   end
 
-  def test_it_does_something_useful
-    assert false
+  def test_that_it_throws_if_constructed_from_null_url
+    refute_nil ::Rapid.new
   end
 end

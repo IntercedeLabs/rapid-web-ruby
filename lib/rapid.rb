@@ -1,5 +1,8 @@
 require "rapid/version"
 
-module Rapid
-  # Your code goes here...
+class Rapid
+
+  def initialize
+  
+  end
 end
