@@ -6,12 +6,11 @@ require 'rapid/version'
 Gem::Specification.new do |spec|
   spec.name          = "rapid"
   spec.version       = Rapid::VERSION
-  spec.authors       = ["Ben.Arnold@intercede"]
+  spec.authors       = ["Ben Arnold"]
   spec.email         = ["ben.arnold@intercede.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{A server-side client for the RapID service}
+  spec.homepage      = "www.intercedelabs.com"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or

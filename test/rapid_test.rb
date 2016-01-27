@@ -2,7 +2,7 @@ require 'test_helper'
 
 class RapidTest < Minitest::Test
 
-  def test_rapid_connectrs_to_rapid_server_at_url
+  def test_rapid_connects_to_rapid_server_at_url
     rapid = Rapid.new("rapid-demo.intercedelabs.com/rapid", load_key())
     id = rapid.request("RapidSecurity.Test.User")
     print "\n\nRequest ID: #{id}\n"
