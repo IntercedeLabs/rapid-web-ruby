@@ -1,3 +1,5 @@
+# This file is part of the MyID RapID package.
+
 require "rapid/version"
 require 'jwt'
 require 'RestClient'
@@ -5,16 +7,39 @@ require 'json'
 require 'uri'
 
 class Rapid
+   #  Inform the Rapid server to expect a device to collect a credential.
+   #
+   #  Example:
+   #    >> rapid = Rapid.new("https://rapid-server/", load_key())
+   #    >> rapid.request(anonymised_user_id)
+   #    => <GUID to pass to client for collecting the certificate>
+   #
+   #    def load_key
+   #      p12 = OpenSSL::PKCS12.new(File.binread("rapid.client.pfx"), "pfx_password")
+   #      return p12.key
+   #    end
+
 
   attr_accessor :rapid_request_url
   attr_reader :rapid_client_key
 
+  # A Rapid object talks to the RapID service found at host.  RapID uses JSON Web Tokens to
+  # validate authenticity of messages, these JWTs are signed by rapid_client_key which must 
+  # be an RSA 256 bit encryption key for the certificate configured on the RapID service.
+  #
+  # The host must be either a hostname, host and path, or full URL, all pointing to the RapID
+  # top level.
   def initialize(host, rapid_client_key)
     raise ArgumentError, 'Missing Rapid host' unless host
     @rapid_request_url = buildRapidUrl(host)
     @rapid_client_key = rapid_client_key
   end
 
+  # The subjectName is an anonymised identifier mapped by your website to a user&device.  It 
+  # will be put verbatim into the Common Name of the certificate issued to the device.
+  #
+  # When the device later connects to your website it will present the client certificate via
+  # mutual TLS. 
   def request(subjectName)
     payload = { :SubjectName => subjectName }
     jwt = signRequest payload
