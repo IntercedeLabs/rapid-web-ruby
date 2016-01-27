@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["ben.arnold@intercede.com"]
 
   spec.summary       = %q{A server-side client for the RapID service}
-  spec.homepage      = "www.intercedelabs.com"
+  spec.homepage      = "http://www.intercedelabs.com"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
