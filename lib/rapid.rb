@@ -2,7 +2,7 @@
 
 require "rapid/version"
 require 'jwt'
-require 'RestClient'
+require 'rest-client'
 require 'json'
 require 'uri'
 
