@@ -59,6 +59,41 @@ class Rapid
   end
 
 
+  # Extracts the anonymous user ID from the SSL client certificate that was used to authenticate
+  # to the website.
+  #
+  # Configure at least one URL to be protected by client SSL.  In Apache this is done like so:
+  # <VirtualHost server-name:443>
+  #   ...
+  #   <Location /authenticated/url>
+  #     SSLVerifyClient require
+  #     SSLOptions +ExportCertData   # apparently this line should be enough, but not for me
+  #     SSLVerifyDepth 1
+  #     RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"   # this is the line that worked
+  #   </Location>
+  # </VirtualHost>
+  #
+  # Then inside your ruby website you want to get the anonymous user ID, for example:
+  # def index
+  #   anon_user_id = Rapid.authenticate_user(request.env["HTTP_SSL_CLIENT_CERT"])
+  #   ...
+  # end
+  def self.authenticated_user(ssl_client_certificate)
+    cert = ssl_client_certificate.to_s.split.join
+    cert = cert.sub! '-----BEGINCERTIFICATE-----', ''
+    cert = cert.sub! '-----ENDCERTIFICATE-----', ''
+
+    cert = Base64.decode64(cert)
+    cert = OpenSSL::X509::Certificate.new(cert)
+    cert = cert.extensions.find {|e| e.oid == "subjectAltName"}
+    cert = cert.value.to_s
+    cert.slice!('URI:')
+    return cert
+  end
+
+  
+
+
   def buildRapidUrl(url)
     parsed = URI(url);
     raise ArgumentError, "Invalid RapID URL" if [parsed.host, parsed.path].all? { |v| v.nil? || v.empty? }
