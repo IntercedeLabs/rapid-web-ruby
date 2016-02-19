@@ -23,6 +23,7 @@ class Rapid
   attr_accessor :rapid_request_url
   attr_reader :rapid_client_key
 
+
   # A Rapid object talks to the RapID service found at host.  RapID uses JSON Web Tokens to
   # validate authenticity of messages, these JWTs are signed by rapid_client_key which must 
   # be an RSA 256 bit encryption key for the certificate configured on the RapID service.
@@ -34,6 +35,7 @@ class Rapid
     @rapid_request_url = buildRapidUrl(host)
     @rapid_client_key = rapid_client_key
   end
+
 
   # The subjectName is an anonymised identifier mapped by your website to a user&device.  It 
   # will be put verbatim into the Common Name of the certificate issued to the device.
@@ -59,39 +61,93 @@ class Rapid
   end
 
 
-  # Extracts the anonymous user ID from the SSL client certificate that was used to authenticate
-  # to the website.
+  # Extracts the anonymous user ID from the SSL client certificate that was used to 
+  # authenticate to the website.
   #
-  # Configure at least one URL to be protected by client SSL.  In Apache this is done like so:
+  #
+  # Inside your ruby website you want to get the anonymous user ID, for example:
+  # def index
+  #   anon_user_id = Rapid.authenticate_user(request)
+  #   ...
+  # end
+  #
+  #
+  # == Development Environment ==
+  #
+  # To enable easy development you can use the RapID SDK without SSL configured in Rails 
+  # development mode.  In this scenario authenticated_user will return the anonymised 
+  # user ID that is passed in the JSON payload.  By default this is expected to be in a 
+  # JSON attribute 'rapid_dev_anon_id'.
+  #
+  #
+  # Development mode is configured in different ways depending on your server choice:
+  #  * Puma 
+  #    Edit the {{environment}} in {{config/puma.rb}} to be {{development}}
+  #
+  #  * Apache
+  #    In your virtual host .conf add {{RailsEnv development}} to the VirtualHost block.
+  #
+  #
+  # == Production Environment ==
+  #
+  # For production, configure at least one URL to be protected by client SSL.  Also make 
+  # sure the environment is set to 'production' (see above).  
+  #
+  # In Apache this is done client SSL is configured  like so:
   # <VirtualHost server-name:443>
   #   ...
   #   <Location /authenticated/url>
   #     SSLVerifyClient require
-  #     SSLOptions +ExportCertData   # apparently this line should be enough, but not for me
+  #     SSLOptions +ExportCertData
   #     SSLVerifyDepth 1
-  #     RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"   # this is the line that worked
+  #     RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"
   #   </Location>
   # </VirtualHost>
   #
-  # Then inside your ruby website you want to get the anonymous user ID, for example:
-  # def index
-  #   anon_user_id = Rapid.authenticate_user(request.env["HTTP_SSL_CLIENT_CERT"])
-  #   ...
-  # end
-  def self.authenticated_user(ssl_client_certificate)
+  def self.authenticated_user(request, dev_json_name = 'rapid_dev_anon_id')
+    cert = request.env["HTTP_SSL_CLIENT_CERT"]
+    return anon_user_id_from_cert(cert) if !cert.blank? && cert != "(null)"
+    raise RuntimeError, "No cerficiate found in HTTP_SSL_CLIENT_CERT" if Rails.env.production?
+
+    return request.params[dev_json_name] unless :nil? if Rails.env.development?
+    raise RuntimeError, "In development mode, no certificate or rapid_dev_anon_id found"
+  end
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  def self.anon_user_id_from_cert(ssl_client_certificate)
     cert = ssl_client_certificate.to_s.split.join
     cert = cert.sub! '-----BEGINCERTIFICATE-----', ''
     cert = cert.sub! '-----ENDCERTIFICATE-----', ''
 
     cert = Base64.decode64(cert)
     cert = OpenSSL::X509::Certificate.new(cert)
-    cert = cert.extensions.find {|e| e.oid == "subjectAltName"}
-    cert = cert.value.to_s
-    cert.slice!('URI:')
-    return cert
+    san = cert.extensions.find {|e| e.oid == "subjectAltName"}
+    san = san.value.to_s
+    san.slice!('URI:')
+    return san
   end
 
-  
+
 
 
   def buildRapidUrl(url)
