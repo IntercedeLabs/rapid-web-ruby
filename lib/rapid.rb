@@ -109,8 +109,8 @@ class Rapid
     return anon_user_id_from_cert(cert) if !cert.blank? && cert != "(null)"
     raise RuntimeError, "No cerficiate found in HTTP_SSL_CLIENT_CERT" if Rails.env.production?
 
-    return request.params[dev_json_name] unless :nil? if Rails.env.development?
-    raise RuntimeError, "In development mode, no certificate or rapid_dev_anon_id found"
+    return request.params[dev_json_name] unless request.params[dev_json_name].nil? if Rails.env.development?
+    raise RuntimeError, "In development mode, no certificate or #{dev_json_name} found"
   end
  
 
