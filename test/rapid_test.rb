@@ -78,7 +78,7 @@ class RapidTest < Minitest::Test
 
 
   def load_key
-    p12 = OpenSSL::PKCS12.new(File.binread("Rapid_Shiraz_Live_Client.pfx"), "12")
+    p12 = OpenSSL::PKCS12.new(File.binread("<path to your pfx>"), "<pfx password>")
     return p12
   end
 
