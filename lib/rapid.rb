@@ -47,13 +47,13 @@ class Rapid
     jwt = signRequest payload
 
     begin
-        return sendRequest(jwt)["Identifier"]
+        return sendRequest(jwt)["requestId"]
     rescue RestClient::Exception => e
         begin
             response = JSON.parse(e.response)
             raise RuntimeError, "Requesting credential failed with server message '#{response["Message"]}'"
         rescue JSON::ParserError
-            raise RuntimeError, "Requesting credential failed with HTTP status '#{e.response.code}'"
+            raise RuntimeError, "Requesting credential failed with HTTP status '#{e.response.code}' : #{e.response}"
         end
     rescue SocketError => e
         raise RuntimeError, "Problem connecting to '#{@rapid_request_url}': #{e}"
@@ -159,16 +159,28 @@ class Rapid
     hostPath = hostPath += ":#{parsed.port}" if !parsed.port.nil? && parsed.port && /:#{parsed.port}/.match(url)
     hostPath = hostPath += "#{parsed.path}" if !parsed.path.nil? && !parsed.path.empty?
 
-    return "https://#{hostPath}/1.1/RequestCredential";        
+    return "https://#{hostPath}/1.0/RequestCredential";        
   end
 
 
   def signRequest(payload)
-    return JWT.encode(payload, rapid_client_key, 'RS256')
+    return payload.to_json
   end
 
   def sendRequest(request)
-    response = RestClient.post(@rapid_request_url, request, :content_type => :json, :accept => :json)
+    print "\nRapID client certificate details:"
+    print "\nIssued To: #{rapid_client_key.certificate.subject}"
+    print "\nIssued By: #{rapid_client_key.certificate.issuer}"
+    print "\nSerial No: #{rapid_client_key.certificate.serial}"
+    
+    response = RestClient::Resource.new(
+      @rapid_request_url,
+      :ssl_client_cert  =>  rapid_client_key.certificate,
+      :ssl_client_key   =>  rapid_client_key.key,
+      :content_type => :json,
+      :accept => :json
+    ).post(request)
+
     return JSON.parse(response)
   end
 end
