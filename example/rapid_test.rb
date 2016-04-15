@@ -4,7 +4,7 @@ require 'minitest/autorun'
 class RapidTest < Minitest::Test
 
   def test_rapid_connects_to_rapid_server_at_url
-    rapid = Rapid.new("request.rapidauth.com/rapid", load_p12())
+    rapid = Rapid.new(load_p12())
     id = rapid.request("RapidSecurity.Test.User")
     print "\n\nRequest ID: #{id}\n"
   end

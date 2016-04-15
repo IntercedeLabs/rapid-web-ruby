@@ -6,7 +6,7 @@ require "base64"
 class RapidTest < Minitest::Test
 
   def test_rapid_connects_to_rapid_server_at_url
-    rapid = Rapid.new("rapid-demo.intercedelabs.com/rapid", load_key())
+    rapid = Rapid.new(load_key())
     id = rapid.request("RapidSecurity.Test.User")
     print "\n\nRequest ID: #{id}\n"
   end
@@ -23,54 +23,63 @@ class RapidTest < Minitest::Test
   end
 
   def test_that_rapid_pads_host_and_path_with_scheme_and_version
-    server = Rapid.new("server/rapid", nil)
-    assert_equal "https://server/rapid/1.1/RequestCredential", server.rapid_request_url
+    rapid = Rapid.new(nil)
+    rapid.host = "server/rapid"
+    assert_equal "https://server/rapid/1.0/RequestCredential", rapid.rapid_request_url
   end
 
   def test_rapid_contructed_from_complete_url_uses_that_url
-    rapid = Rapid.new "https://server/rapid", nil
-    assert_equal "https://server/rapid/1.1/RequestCredential", rapid.rapid_request_url
+    rapid = Rapid.new nil
+    rapid.host = "https://server/rapid"
+    assert_equal "https://server/rapid/1.0/RequestCredential", rapid.rapid_request_url
   end
 
   def test_rapid_contructed_from_just_one_word_uses_that_as_host
-    rapid = Rapid.new("server", nil)
-    assert_equal "https://server/1.1/RequestCredential", rapid.rapid_request_url
+    rapid = Rapid.new(nil)
+    rapid.host = "server"
+    assert_equal "https://server/1.0/RequestCredential", rapid.rapid_request_url
   end
 
   def test_rapid_contructed_from_host_and_path
-    rapid = Rapid.new("server/rapid", nil)
-    assert_equal "https://server/rapid/1.1/RequestCredential", rapid.rapid_request_url
+    rapid = Rapid.new(nil)
+    rapid.host = "server/rapid"
+    assert_equal "https://server/rapid/1.0/RequestCredential", rapid.rapid_request_url
   end
 
   def test_rapid_contructed_from_https_scheme_and_host
-    rapid = Rapid.new("https://server", nil)
-    assert_equal "https://server/1.1/RequestCredential", rapid.rapid_request_url
+    rapid = Rapid.new(nil)
+    rapid.host = "https://server"
+    assert_equal "https://server/1.0/RequestCredential", rapid.rapid_request_url
   end
 
   def test_rapid_contructed_from_https_scheme_host_and_path
-    rapid = Rapid.new("https://server/rapid", nil)
-    assert_equal "https://server/rapid/1.1/RequestCredential", rapid.rapid_request_url
+    rapid = Rapid.new(nil)
+    rapid.host = "https://server/rapid"
+    assert_equal "https://server/rapid/1.0/RequestCredential", rapid.rapid_request_url
   end
 
   def test_rapid_contructed_from_https_scheme_path_and_host
-    rapid = Rapid.new("https://server:443", nil)
-    assert_equal "https://server:443/1.1/RequestCredential", rapid.rapid_request_url
+    rapid = Rapid.new(nil)
+    rapid.host = "https://server:443"
+    assert_equal "https://server:443/1.0/RequestCredential", rapid.rapid_request_url
   end
 
   def test_rapid_contructed_from_https_customr_port
-    rapid = Rapid.new("https://server:4443", nil)
-    assert_equal "https://server:4443/1.1/RequestCredential", rapid.rapid_request_url
+    rapid = Rapid.new(nil)
+    rapid.host = "https://server:4443"
+    assert_equal "https://server:4443/1.0/RequestCredential", rapid.rapid_request_url
   end
 
   def test_rapid_contructed_from_http_scheme_and_host_uses_https_in_url
-    rapid = Rapid.new("http://server", nil)
-    assert_equal "https://server/1.1/RequestCredential", rapid.rapid_request_url
+    rapid = Rapid.new(nil)
+    rapid.host = "http://server"
+    assert_equal "https://server/1.0/RequestCredential", rapid.rapid_request_url
   end  
 
 
   def load_key
-    p12 = OpenSSL::PKCS12.new(File.binread("rapid.testing.rp.pfx"), "rapidtests")
-    p12.key
+    p12 = OpenSSL::PKCS12.new(File.binread("Rapid_Shiraz_Live_Client.pfx"), "12")
+    return p12
   end
 
 end
@@ -115,7 +124,11 @@ class RapidAuthTest < Minitest::Test
     wyKQ8RnWhZ/9h5UsVyMa8TLsEedo73u2nhedU9NIWnYzzkJ2oSRp9tntm7iPJnLf 
     dX2GgOPYoge87aL54vI9sPw5 
     -----END CERTIFICATE-----"
-    auid = Rapid.authenticated_user(cert)
+    
+    request = OpenStruct.new(
+      { "env" => OpenStruct.new({ "HTTP_SSL_CLIENT_CERT" => cert }) })
+      
+    auid = Rapid.authenticated_user(request)
     assert_equal "8848a693-bdad-4053-a90f-da8b0ac8d4c4", auid
   end
 end

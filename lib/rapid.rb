@@ -10,13 +10,13 @@ class Rapid
    #  Inform the Rapid server to expect a device to collect a credential.
    #
    #  Example:
-   #    >> rapid = Rapid.new("https://rapid-server/", load_key())
+   #    >> rapid = Rapid.new(load_key())
    #    >> rapid.request(anonymised_user_id)
    #    => <GUID to pass to client for collecting the certificate>
    #
    #    def load_key
    #      p12 = OpenSSL::PKCS12.new(File.binread("rapid.client.pfx"), "pfx_password")
-   #      return p12.key
+   #      return p12
    #    end
 
 
@@ -24,18 +24,13 @@ class Rapid
   attr_reader :rapid_client_key
 
 
-  # A Rapid object talks to the RapID service found at host.  RapID uses JSON Web Tokens to
-  # validate authenticity of messages, these JWTs are signed by rapid_client_key which must 
-  # be an RSA 256 bit encryption key for the certificate configured on the RapID service.
-  #
-  # The host must be either a hostname, host and path, or full URL, all pointing to the RapID
-  # top level.
-  def initialize(host, rapid_client_key)
-    raise ArgumentError, 'Missing Rapid host' unless host
-    @rapid_request_url = buildRapidUrl(host)
+  # A Rapid object talks to the RapID Auth service.  RapID uses TLS to validate 
+  # authenticity of messages and must be provided with an authentication certificate.
+  # Service authentication certificates are downloaded from the Customer Portal. 
+  def initialize(rapid_client_key)
+    @rapid_request_url = buildRapidUrl("request.rapidauth.com/rapid")
     @rapid_client_key = rapid_client_key
   end
-
 
   # The subjectName is an anonymised identifier mapped by your website to a user&device.  It 
   # will be put verbatim into the Common Name of the certificate issued to the device.
@@ -106,7 +101,7 @@ class Rapid
   #
   def self.authenticated_user(request, dev_json_name = 'rapid_dev_anon_id')
     cert = request.env["HTTP_SSL_CLIENT_CERT"]
-    return anon_user_id_from_cert(cert) if !cert.blank? && cert != "(null)"
+    return anon_user_id_from_cert(cert) if !(cert.nil? || cert.empty?) && cert != "(null)"
     raise RuntimeError, "No cerficiate found in HTTP_SSL_CLIENT_CERT" if Rails.env.production?
 
     return request.params[dev_json_name] unless request.params[dev_json_name].nil? if Rails.env.development?
@@ -132,6 +127,13 @@ class Rapid
 
 
 
+
+  # The host must be either a hostname, host and path, or full URL, all pointing to the RapID
+  # top level.
+  def host=(host)
+    raise ArgumentError, 'Missing Rapid host' unless host
+    @rapid_request_url = buildRapidUrl(host)
+  end
 
 
   def self.anon_user_id_from_cert(ssl_client_certificate)
