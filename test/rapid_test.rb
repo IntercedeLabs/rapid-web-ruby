@@ -9,9 +9,55 @@ class RapidTest < Minitest::Test
     rapid = Rapid.new(load_key())
     id = rapid.request("RapidSecurity.Test.User")
     print "\n\nRequest ID: #{id}\n"
+    refute_nil id
   end
 
+  def test_subject1_always_successful_with_known_requestid
+    rapid = Rapid.new(load_key())
+    id = rapid.request("TestCertificateRequestValid1")
+    assert_equal "65c4d858-23b2-4a9e-9c45-b8f36d1c442f", id
+  end
+  
+  def test_subject2_always_successful_with_known_requestid
+    rapid = Rapid.new(load_key())
+    id = rapid.request("TestCertificateRequestValid2")
+    assert_equal "f7500457-5663-4086-a749-d9e2f7a002cc", id
+  end
+  
+  def test_subject3_always_successful_with_known_requestid
+    rapid = Rapid.new(load_key())
+    id = rapid.request("TestCertificateRequestValid3")
+    assert_equal "64f926b3-209a-4e32-8da8-bbe5fd99de46", id
+  end
 
+  def test_subject4_always_successful_with_known_requestid
+    rapid = Rapid.new(load_key())
+    id = rapid.request("TestCertificateRequestValid4")
+    assert_equal "a2d79ce4-e7f3-4b4e-b23e-01874a1540b3", id
+  end
+
+  def test_subject5_always_successful_with_known_requestid
+    rapid = Rapid.new(load_key())
+    id = rapid.request("TestCertificateRequestValid5")
+    assert_equal "1b661ed5-12a0-4abd-b0e6-1be7c665a100", id
+  end
+
+  # During a RequestCredential call we don't expected a failure
+  # We expect a specific requestId
+  def test_subject6_always_expired_with_known_requestid
+    rapid = Rapid.new(load_key())
+    id = rapid.request("TestCertificateRequestExpired")
+    assert_equal "0a1fd8fa-348f-4ced-a64d-18547feb2848", id
+  end
+
+  # During a RequestCredential call we don't expected a failure
+  # We expect a specific requestId
+  def test_subject6_always_collected_with_known_requestid
+    rapid = Rapid.new(load_key())
+    id = rapid.request("TestCertificateRequestCollected")
+    assert_equal "a322e74b-a292-4b2e-8f63-779924b15923", id
+  end
+  
   def test_that_it_has_a_version_number
     refute_nil ::Rapid::VERSION
   end
